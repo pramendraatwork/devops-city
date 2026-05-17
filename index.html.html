@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps City by Pramendra</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sky: #1a1a2e;
+  --sky2: #16213e;
+  --ground: #0f3460;
+  --accent: #e94560;
+  --gold: #f5a623;
+  --teal: #00b4d8;
+  --green: #06d6a0;
+  --purple: #7b2fff;
+  --white: #f8f9fa;
+  --card-bg: rgba(255,255,255,0.07);
+  --card-border: rgba(255,255,255,0.15);
+  --font-title: 'Fredoka One', cursive;
+  --font-body: 'Nunito', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  background: var(--sky);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* STARS */
+.stars {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
+}
+.star {
+  position: absolute; border-radius: 50%;
+  background: white; animation: twinkle 3s infinite alternate;
+}
+@keyframes twinkle { from { opacity: 0.2; transform: scale(1); } to { opacity: 1; transform: scale(1.4); } }
+
+/* SCREENS */
+.screen { display: none; position: relative; z-index: 1; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ===== TITLE SCREEN ===== */
+#title-screen {
+  align-items: center; justify-content: center; text-align: center;
+  padding: 2rem;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+.title-logo { font-family: var(--font-title); font-size: clamp(2.5rem, 7vw, 5rem); color: var(--gold); text-shadow: 0 0 40px rgba(245,166,35,0.5); margin-bottom: 0.25rem; }
+.title-sub { font-size: 1rem; color: rgba(255,255,255,0.6); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 2rem; }
+.pramendra-character { font-size: 7rem; animation: float 3s ease-in-out infinite; margin-bottom: 1rem; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+.story-box {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 20px; padding: 1.5rem 2rem; max-width: 520px;
+  font-size: 1.05rem; line-height: 1.8; color: rgba(255,255,255,0.85);
+  margin-bottom: 2rem;
+}
+.story-box strong { color: var(--gold); }
+.btn-start {
+  font-family: var(--font-title); font-size: 1.4rem;
+  background: linear-gradient(135deg, var(--accent), #ff6b35);
+  border: none; border-radius: 50px; padding: 1rem 3rem;
+  color: white; cursor: pointer;
+  box-shadow: 0 8px 30px rgba(233,69,96,0.5);
+  transition: transform 0.2s, box-shadow 0.2s;
+  letter-spacing: 1px;
+}
+.btn-start:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 14px 40px rgba(233,69,96,0.6); }
+
+/* ===== CITY MAP SCREEN ===== */
+#city-screen { padding: 1.5rem; background: linear-gradient(180deg, #1a1a2e 0%, #0f3460 100%); }
+.city-header { text-align: center; margin-bottom: 1.5rem; }
+.city-title { font-family: var(--font-title); font-size: 2rem; color: var(--gold); }
+.city-subtitle { font-size: 0.9rem; color: rgba(255,255,255,0.55); }
+.progress-overall { background: rgba(255,255,255,0.1); border-radius: 50px; height: 10px; margin: 0.75rem auto; max-width: 400px; }
+.progress-overall-fill { height: 10px; border-radius: 50px; background: linear-gradient(90deg, var(--green), var(--teal)); transition: width 0.6s ease; }
+
+.buildings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.building-tile {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  padding: 1.2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.building-tile:hover:not(.locked) { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+.building-tile.locked { opacity: 0.35; cursor: not-allowed; }
+.building-tile.completed { border-color: var(--green); box-shadow: 0 0 20px rgba(6,214,160,0.25); }
+.building-tile.completed::before {
+  content: '✓'; position: absolute; top: 8px; right: 12px;
+  background: var(--green); color: #000; font-weight: 800;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+.building-tile.available { border-color: var(--teal); animation: pulse-border 2s infinite; }
+@keyframes pulse-border { 0%,100% { box-shadow: 0 0 0 0 rgba(0,180,216,0.4); } 50% { box-shadow: 0 0 0 8px rgba(0,180,216,0); } }
+.building-emoji { font-size: 2.8rem; margin-bottom: 0.4rem; display: block; }
+.building-name { font-family: var(--font-title); font-size: 1rem; color: var(--white); }
+.building-topic { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.building-tile.completed .building-emoji { filter: drop-shadow(0 0 8px rgba(6,214,160,0.8)); }
+
+.interview-mode-btn {
+  display: block; margin: 1.5rem auto 0;
+  font-family: var(--font-title); font-size: 1.1rem;
+  background: linear-gradient(135deg, var(--purple), var(--accent));
+  border: none; border-radius: 50px; padding: 0.8rem 2.5rem;
+  color: white; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(123,47,255,0.4);
+  transition: transform 0.2s;
+  opacity: 0.4; pointer-events: none;
+}
+.interview-mode-btn.unlocked { opacity: 1; pointer-events: all; animation: rainbow 3s linear infinite; }
+@keyframes rainbow {
+  0% { box-shadow: 0 6px 20px rgba(123,47,255,0.6); }
+  33% { box-shadow: 0 6px 20px rgba(233,69,96,0.6); }
+  66% { box-shadow: 0 6px 20px rgba(245,166,35,0.6); }
+  100% { box-shadow: 0 6px 20px rgba(123,47,255,0.6); }
+}
+
+/* ===== CHAPTER SCREEN ===== */
+#chapter-screen { padding: 1.5rem; background: linear-gradient(180deg, #1a1a2e 0%, #0f3460 100%); }
+.chapter-nav { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.btn-back {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 50px; padding: 0.5rem 1.2rem;
+  color: white; cursor: pointer; font-family: var(--font-body); font-size: 0.9rem;
+  transition: background 0.2s;
+}
+.btn-back:hover { background: rgba(255,255,255,0.15); }
+.chapter-title-bar { font-family: var(--font-title); font-size: 1.6rem; color: var(--gold); }
+
+.pramendra-arrives {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 20px; padding: 1.2rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.5s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+.pram-avatar { font-size: 3rem; flex-shrink: 0; }
+.pram-speech { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.9); }
+.pram-speech strong { color: var(--gold); }
+
+.concepts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+.concept-card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 16px; padding: 1rem 1.1rem;
+  animation: fadeUp 0.4s ease both;
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.concept-icon { font-size: 1.6rem; margin-bottom: 0.4rem; }
+.concept-title { font-weight: 800; font-size: 0.9rem; color: var(--teal); margin-bottom: 0.3rem; }
+.concept-analogy { font-size: 0.82rem; line-height: 1.6; color: rgba(255,255,255,0.75); }
+.concept-analogy em { color: var(--gold); font-style: normal; font-weight: 700; }
+
+.btn-chat-arch {
+  display: block; width: 100%;
+  font-family: var(--font-title); font-size: 1.2rem;
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  border: none; border-radius: 50px; padding: 0.9rem;
+  color: #000; cursor: pointer; margin-bottom: 1rem;
+  box-shadow: 0 6px 20px rgba(0,180,216,0.35);
+  transition: transform 0.2s;
+}
+.btn-chat-arch:hover { transform: translateY(-2px); }
+
+/* ===== CHAT SCREEN ===== */
+#chat-screen { padding: 1.5rem; background: linear-gradient(180deg, #1a1a2e 0%, #0f3460 100%); flex-direction: column; }
+.chat-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.arch-avatar { font-size: 2.5rem; }
+.arch-info .arch-name { font-family: var(--font-title); font-size: 1.2rem; color: var(--gold); }
+.arch-info .arch-role { font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+
+.chat-messages {
+  flex: 1; overflow-y: auto;
+  background: rgba(0,0,0,0.25); border-radius: 16px;
+  padding: 1rem; margin-bottom: 1rem;
+  min-height: 350px; max-height: 400px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.msg { display: flex; gap: 10px; align-items: flex-end; animation: fadeUp 0.3s ease; }
+.msg.user { flex-direction: row-reverse; }
+.msg-bubble {
+  max-width: 78%; padding: 0.7rem 1rem;
+  border-radius: 18px; font-size: 0.9rem; line-height: 1.6;
+}
+.msg.arch .msg-bubble { background: rgba(0,180,216,0.2); border: 1px solid rgba(0,180,216,0.3); border-bottom-left-radius: 4px; }
+.msg.user .msg-bubble { background: rgba(233,69,96,0.25); border: 1px solid rgba(233,69,96,0.3); border-bottom-right-radius: 4px; }
+.msg-avatar { font-size: 1.5rem; flex-shrink: 0; }
+.typing-indicator { display: flex; gap: 4px; align-items: center; padding: 0.6rem 0.8rem; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); animation: bounce 1.2s infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
+
+.chat-input-row { display: flex; gap: 10px; }
+.chat-input {
+  flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50px; padding: 0.7rem 1.2rem;
+  color: white; font-family: var(--font-body); font-size: 0.95rem;
+  outline: none; transition: border-color 0.2s;
+}
+.chat-input::placeholder { color: rgba(255,255,255,0.35); }
+.chat-input:focus { border-color: var(--teal); }
+.btn-send {
+  background: var(--accent); border: none; border-radius: 50px;
+  padding: 0.7rem 1.4rem; color: white; cursor: pointer;
+  font-family: var(--font-title); font-size: 1rem;
+  transition: transform 0.15s;
+}
+.btn-send:hover { transform: scale(1.06); }
+.btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.chat-complete-btn {
+  display: none; width: 100%; margin-top: 0.75rem;
+  font-family: var(--font-title); font-size: 1.1rem;
+  background: linear-gradient(135deg, var(--green), var(--teal));
+  border: none; border-radius: 50px; padding: 0.85rem;
+  color: #000; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(6,214,160,0.4);
+  animation: fadeUp 0.5s ease;
+}
+
+/* ===== BUG MONSTER SCREEN ===== */
+#bug-screen {
+  align-items: center; justify-content: center; text-align: center;
+  padding: 2rem; background: linear-gradient(180deg, #1a0010 0%, #3d0020 100%);
+}
+.bug-monster { font-size: 8rem; animation: shake 0.5s infinite; margin-bottom: 0.5rem; }
+@keyframes shake { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(5deg); } }
+.bug-title { font-family: var(--font-title); font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
+.bug-speech { font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 1.5rem; line-height: 1.6; }
+.bug-question-box {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,80,80,0.4);
+  border-radius: 18px; padding: 1.5rem; max-width: 500px; margin: 0 auto 1.5rem;
+}
+.bug-question { font-size: 1.05rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.6; }
+.bug-options { display: flex; flex-direction: column; gap: 10px; }
+.bug-option {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px; padding: 0.75rem 1rem;
+  cursor: pointer; font-size: 0.95rem; font-family: var(--font-body);
+  color: white; text-align: left; transition: background 0.2s, border-color 0.2s;
+}
+.bug-option:hover { background: rgba(255,255,255,0.15); border-color: var(--teal); }
+.bug-option.correct { background: rgba(6,214,160,0.25); border-color: var(--green); }
+.bug-option.wrong { background: rgba(233,69,96,0.25); border-color: var(--accent); }
+
+/* ===== DIARY SCREEN ===== */
+#diary-screen {
+  align-items: center; justify-content: center;
+  padding: 2rem; background: linear-gradient(180deg, #1a1a2e 0%, #0f3460 100%);
+  text-align: center;
+}
+.diary-book {
+  background: #fef9e7; border-radius: 20px; padding: 2rem;
+  max-width: 480px; color: #333; position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.diary-book::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 12px; background: var(--accent); border-radius: 20px 0 0 20px;
+}
+.diary-date { font-size: 0.8rem; color: #999; font-style: italic; margin-bottom: 0.5rem; }
+.diary-heading { font-family: var(--font-title); font-size: 1.4rem; color: var(--accent); margin-bottom: 1rem; }
+.diary-content { font-size: 0.95rem; line-height: 1.8; color: #444; text-align: left; font-style: italic; min-height: 80px; }
+.diary-pram { font-size: 0.85rem; color: #888; margin-top: 1rem; text-align: right; }
+.btn-next-building {
+  margin-top: 1.5rem;
+  font-family: var(--font-title); font-size: 1.2rem;
+  background: linear-gradient(135deg, var(--gold), #ff6b35);
+  border: none; border-radius: 50px; padding: 0.9rem 2.5rem;
+  color: white; cursor: pointer;
+  box-shadow: 0 8px 25px rgba(245,166,35,0.4);
+  transition: transform 0.2s;
+}
+.btn-next-building:hover { transform: translateY(-2px); }
+
+/* ===== CERTIFICATE SCREEN ===== */
+#cert-screen {
+  align-items: center; justify-content: center;
+  padding: 2rem; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  text-align: center;
+}
+.cert-fireworks { font-size: 4rem; animation: pop 0.6s ease infinite alternate; }
+@keyframes pop { from { transform: scale(1); } to { transform: scale(1.2); } }
+.certificate {
+  background: linear-gradient(135deg, #fff9e6, #fff3cc);
+  border: 4px solid var(--gold); border-radius: 20px;
+  padding: 2.5rem; max-width: 500px; color: #333;
+  box-shadow: 0 0 60px rgba(245,166,35,0.4);
+  position: relative; margin: 1rem 0;
+}
+.cert-title { font-family: var(--font-title); font-size: 1.8rem; color: var(--accent); margin-bottom: 0.25rem; }
+.cert-subtitle { font-size: 0.85rem; color: #888; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1.5rem; }
+.cert-hero-name { font-family: var(--font-title); font-size: 2.5rem; color: var(--gold); margin: 0.5rem 0; }
+.cert-body { font-size: 0.9rem; color: #555; line-height: 1.8; margin-bottom: 1rem; }
+.cert-seal { font-size: 3rem; }
+.cert-arch-sig { font-size: 0.8rem; color: #888; font-style: italic; }
+
+/* ===== INTERVIEW SCREEN ===== */
+#interview-screen { padding: 1.5rem; background: linear-gradient(180deg, #0d0d1a 0%, #1a0a2e 100%); }
+.interview-header { text-align: center; margin-bottom: 1.5rem; }
+.interview-title { font-family: var(--font-title); font-size: 1.8rem; color: var(--purple); }
+.interview-sub { font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-top: 0.25rem; }
+.topic-selector { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 1.5rem; }
+.topic-btn {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50px; padding: 0.4rem 1rem; font-size: 0.82rem;
+  color: white; cursor: pointer; font-family: var(--font-body);
+  transition: all 0.2s;
+}
+.topic-btn.selected { background: var(--purple); border-color: var(--purple); }
+
+/* LOADING */
+.loading-spinner {
+  display: inline-block; width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+  border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* CELEBRATION OVERLAY */
+.celebration {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7); z-index: 100;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.celebration-emoji { font-size: 6rem; animation: pop 0.5s ease infinite alternate; }
+.celebration-text { font-family: var(--font-title); font-size: 2.2rem; color: var(--gold); margin: 0.5rem 0; }
+.celebration-sub { font-size: 1rem; color: rgba(255,255,255,0.8); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- STARS BACKGROUND -->
+<div class="stars" id="stars"></div>
+
+<!-- ===== TITLE SCREEN ===== -->
+<div id="title-screen" class="screen active">
+  <div class="pramendra-character">🧒</div>
+  <div class="title-logo">DevOps City</div>
+  <div class="title-sub">by Pramendra</div>
+  <div class="story-box">
+    Meet <strong>Pramendra</strong> — a curious kid who just arrived at the most amazing city in the world! 🏙️<br><br>
+    <strong>DevOps City</strong> has 9 magical buildings, each hiding powerful tech secrets. But the city is dark and locked! 🔒<br><br>
+    Help Pramendra explore each building, defeat the <strong>Bug Monster 🦹</strong>, and become the ultimate <strong>DevOps Hero!</strong>
+  </div>
+  <button class="btn-start" onclick="showCity()">🚀 Start Exploring!</button>
+</div>
+
+<!-- ===== CITY MAP SCREEN ===== -->
+<div id="city-screen" class="screen">
+  <div class="city-header">
+    <div class="city-title">🏙️ DevOps City</div>
+    <div class="city-subtitle">Help Pramendra light up the city!</div>
+    <div class="progress-overall">
+      <div class="progress-overall-fill" id="overall-progress" style="width:0%"></div>
+    </div>
+    <div style="font-size:0.8rem; color:rgba(255,255,255,0.5)" id="progress-text">0 / 9 buildings completed</div>
+  </div>
+  <div class="buildings-grid" id="buildings-grid"></div>
+  <button class="interview-mode-btn" id="interview-btn" onclick="showInterview()">🎙️ Interview Mode — Unlock All 9 First!</button>
+</div>
+
+<!-- ===== CHAPTER SCREEN ===== -->
+<div id="chapter-screen" class="screen">
+  <div class="chapter-nav">
+    <button class="btn-back" onclick="showCity()">← City Map</button>
+    <div class="chapter-title-bar" id="chapter-title-bar"></div>
+  </div>
+  <div class="pramendra-arrives">
+    <div class="pram-avatar">🧒</div>
+    <div class="pram-speech" id="pram-speech"></div>
+  </div>
+  <div class="concepts-grid" id="concepts-grid"></div>
+  <button class="btn-chat-arch" onclick="showChat()">💬 Chat with Arch — Test Your Knowledge!</button>
+</div>
+
+<!-- ===== CHAT SCREEN ===== -->
+<div id="chat-screen" class="screen">
+  <div class="chat-header">
+    <button class="btn-back" onclick="showChapter()">← Back</button>
+    <div class="arch-avatar">🏛️</div>
+    <div class="arch-info">
+      <div class="arch-name">Arch</div>
+      <div class="arch-role">DevOps City Architect & Mentor</div>
+    </div>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chat-input" placeholder="Type your answer or question..." onkeydown="if(event.key==='Enter') sendMessage()" />
+    <button class="btn-send" id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+  <button class="chat-complete-btn" id="complete-btn" onclick="showBugMonster()">⚔️ Face the Bug Monster!</button>
+</div>
+
+<!-- ===== BUG MONSTER SCREEN ===== -->
+<div id="bug-screen" class="screen">
+  <div class="bug-monster">🦹</div>
+  <div class="bug-title">The Bug Monster Attacks!</div>
+  <div class="bug-speech" id="bug-speech"></div>
+  <div class="bug-question-box">
+    <div class="bug-question" id="bug-question"></div>
+    <div class="bug-options" id="bug-options"></div>
+  </div>
+</div>
+
+<!-- ===== DIARY SCREEN ===== -->
+<div id="diary-screen" class="screen">
+  <div style="font-size:3rem; margin-bottom:0.5rem">📔</div>
+  <div style="font-family:var(--font-title); font-size:1.5rem; color:var(--gold); margin-bottom:1rem">Pramendra's Diary</div>
+  <div class="diary-book">
+    <div class="diary-date" id="diary-date"></div>
+    <div class="diary-heading" id="diary-heading"></div>
+    <div class="diary-content" id="diary-content">✍️ Writing diary entry...</div>
+    <div class="diary-pram">— Pramendra 🧒</div>
+  </div>
+  <button class="btn-next-building" id="diary-next-btn" onclick="completeBuildingAndNext()">🏙️ Back to City Map!</button>
+</div>
+
+<!-- ===== INTERVIEW SCREEN ===== -->
+<div id="interview-screen" class="screen">
+  <div class="chapter-nav">
+    <button class="btn-back" onclick="showCity()">← City Map</button>
+  </div>
+  <div class="interview-header">
+    <div class="interview-title">🎙️ Interview Mode</div>
+    <div class="interview-sub">Arch is now a STRICT interviewer. No hints. Real questions. Good luck! 😅</div>
+  </div>
+  <div class="topic-selector" id="topic-selector"></div>
+  <div class="chat-header" style="margin-bottom:0.75rem">
+    <div class="arch-avatar">🏛️</div>
+    <div class="arch-info">
+      <div class="arch-name" style="color:var(--accent)">Arch — Interview Mode</div>
+      <div class="arch-role" style="color:rgba(255,80,80,0.7)">No hints. Professional mode activated.</div>
+    </div>
+  </div>
+  <div class="chat-messages" id="interview-messages" style="max-height:380px"></div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="interview-input" placeholder="Give your best answer..." onkeydown="if(event.key==='Enter') sendInterviewMessage()" />
+    <button class="btn-send" onclick="sendInterviewMessage()">Send</button>
+  </div>
+</div>
+
+<!-- ===== CERTIFICATE SCREEN ===== -->
+<div id="cert-screen" class="screen">
+  <div class="cert-fireworks">🎆🎇🎆</div>
+  <div class="certificate">
+    <div class="cert-title">Certificate of Excellence</div>
+    <div class="cert-subtitle">DevOps City — Hero Award</div>
+    <div style="font-size:0.9rem; color:#666">This certifies that</div>
+    <div class="cert-hero-name">Pramendra</div>
+    <div class="cert-body">
+      has successfully explored all 9 buildings of DevOps City, defeated the Bug Monster every single time, and is now a certified <strong>DevOps Hero!</strong><br><br>
+      From City Foundation to Urban Planning HQ — this young explorer conquered Linux, Git, Docker, Jenkins, CI/CD, Kubernetes, AWS, Monitoring, and Terraform!
+    </div>
+    <div class="cert-seal">🏆</div>
+    <div class="cert-arch-sig">— Arch, Chief Architect of DevOps City</div>
+  </div>
+  <button class="btn-start" onclick="showInterview()">🎙️ Try Interview Mode!</button>
+</div>
+
+<script>
+// ===== DATA =====
+const BUILDINGS = [
+  {
+    id: 0, emoji: '🐧', name: 'City Foundation', topic: 'Linux & Shell Scripting',
+    pramSpeech: `<strong>Pramendra steps through the city gates and gasps! 👀</strong><br>"Whoa! This is DevOps City! But wait... how do I even TALK to these computers?!" Arch appears and smiles — "Welcome young builder! First, you must learn the language of the city — the SHELL. It's like texting your computer!"`,
+    concepts: [
+      { icon: '💬', title: 'What is Linux?', analogy: 'Linux is like the <em>foundation of a house</em> — everything is built on top of it! Most servers in the world run Linux.' },
+      { icon: '🖥️', title: 'The Shell', analogy: 'Shell is like <em>texting your computer</em> — you type commands, it listens and does exactly what you say!' },
+      { icon: '📁', title: 'Files & Folders', analogy: 'Just like your school bag has subjects — Linux has folders (called directories) to keep things organized!' },
+      { icon: '⚡', title: 'Commands', analogy: '<em>ls</em> = look inside a folder. <em>cd</em> = walk into a room. <em>mkdir</em> = build a new room! Simple!' },
+      { icon: '📜', title: 'Shell Scripts', analogy: 'A shell script is like a <em>to-do list for the computer</em> — write all steps once, run it forever!' },
+      { icon: '🔑', title: 'Permissions', analogy: 'Like a <em>key to a room</em> — only people with permission can open certain files. Keeps secrets safe!' }
+    ],
+    bugQ: { q: "Pramendra wants to see all files in a folder. Which Linux command does he use?", options: ["dir", "ls", "show", "list"], ans: 1 }
+  },
+  {
+    id: 1, emoji: '🌿', name: 'Blueprint Office', topic: 'Git & Version Control',
+    pramSpeech: `<strong>Pramendra walks into a huge office full of blueprints! 📐</strong><br>"Wow, there are SO many blueprints! And they keep changing! How do they remember the old ones?!" Arch chuckles — "Ahh! This is where Git lives, young builder! It's the MAGIC SAVE BUTTON of DevOps City!"`,
+    concepts: [
+      { icon: '💾', title: 'What is Git?', analogy: 'Git is like a <em>magic save button in a video game</em> — you can save your progress and go back to any point if something breaks!' },
+      { icon: '🌿', title: 'Repository (Repo)', analogy: 'A repo is like a <em>special folder</em> that remembers EVERY change ever made. Nothing is forgotten!' },
+      { icon: '🌲', title: 'Branches', analogy: 'Branches are like <em>parallel story chapters</em> — you can try new ideas without ruining the main story!' },
+      { icon: '🤝', title: 'Merge', analogy: 'Merging is like <em>combining two pizza halves</em> — when your new feature is ready, it joins the main code!' },
+      { icon: '☁️', title: 'GitHub', analogy: 'GitHub is like a <em>Google Drive for code</em> — your team stores and shares all blueprints there!' },
+      { icon: '📸', title: 'Commit', analogy: 'A commit is like taking a <em>snapshot photo</em> — it freezes that moment of your code forever!' }
+    ],
+    bugQ: { q: "Pramendra wants to save his code changes with a message. Which Git command does he use?", options: ["git save", "git push", "git commit -m", "git store"], ans: 2 }
+  },
+  {
+    id: 2, emoji: '🐳', name: 'Shipping Port', topic: 'Docker & Containers',
+    pramSpeech: `<strong>Pramendra runs to the giant Shipping Port! 🚢</strong><br>"These huge boxes are everywhere! What's inside them?!" A sailor (Docker Dana) shouts — "These are CONTAINERS, kid! We pack everything an app needs inside — and it works ANYWHERE!" Pramendra's eyes go wide — "Like... a lunchbox?!"`,
+    concepts: [
+      { icon: '📦', title: 'What is Docker?', analogy: 'Docker is like a <em>magical lunchbox</em> — pack your app with everything it needs, and it works perfectly on ANY computer!' },
+      { icon: '🏗️', title: 'Container', analogy: 'A container is like a <em>shipping box</em> — sealed, portable, and works the same whether at home or across the world!' },
+      { icon: '📋', title: 'Dockerfile', analogy: 'A Dockerfile is the <em>recipe</em> for your lunchbox — "Add bread, add butter, add app" — Docker follows it exactly!' },
+      { icon: '📸', title: 'Docker Image', analogy: 'An image is like a <em>cookie cutter</em> — use the same cutter to make 100 identical cookies (containers)!' },
+      { icon: '🗃️', title: 'Docker Hub', analogy: 'Docker Hub is like a <em>supermarket for ready-made lunchboxes</em> — download official boxes for MySQL, Python, Node!' },
+      { icon: '🔌', title: 'Port Mapping', analogy: 'Like giving your container a <em>front door number</em> — visitors knock on port 80, you answer from inside!' }
+    ],
+    bugQ: { q: "Pramendra wants to run a Docker container from an image called 'myapp'. What command does he use?", options: ["docker start myapp", "docker run myapp", "docker launch myapp", "docker open myapp"], ans: 1 }
+  },
+  {
+    id: 3, emoji: '🔧', name: 'Engine Room', topic: 'Jenkins',
+    pramSpeech: `<strong>Pramendra hears loud clanking from the Engine Room! ⚙️</strong><br>"It's so LOUD in here! What's all this machinery?!" An old robot waves — "I am JENKINS! I am the robot helper of DevOps City! Every time a developer writes code, I automatically test it, build it, and ship it — so humans don't have to!"`,
+    concepts: [
+      { icon: '🤖', title: 'What is Jenkins?', analogy: 'Jenkins is like a <em>robot assistant who does your homework automatically</em> — every time you change code, Jenkins checks it for you!' },
+      { icon: '🔄', title: 'Automation', analogy: 'Instead of a human pressing "build" every time, <em>Jenkins does it automatically</em> — like a magical conveyor belt!' },
+      { icon: '📋', title: 'Pipeline', analogy: 'A Jenkins pipeline is like an <em>assembly line in a factory</em> — code goes in one end, tested app comes out the other!' },
+      { icon: '🔌', title: 'Plugins', analogy: 'Jenkins plugins are like <em>LEGO add-ons</em> — snap on extra powers like Git connection, Slack alerts, Docker builder!' },
+      { icon: '⏰', title: 'Build Triggers', analogy: 'Like a <em>doorbell for your code</em> — the moment new code arrives, Jenkins wakes up and starts working!' },
+      { icon: '✅', title: 'Build Success/Fail', analogy: 'Jenkins sends you a <em>green or red report card</em> — green means everything passed, red means something broke!' }
+    ],
+    bugQ: { q: "In Jenkins, what do we call the automated sequence of steps from code to deployment?", options: ["Workflow", "Pipeline", "Assembly", "Conveyor"], ans: 1 }
+  },
+  {
+    id: 4, emoji: '⚙️', name: 'The Factory', topic: 'CI/CD Pipelines',
+    pramSpeech: `<strong>Pramendra enters the biggest building in the city — The Factory! 🏭</strong><br>"Everything is moving so fast! Code goes in... and an app comes out?! How?!" Arch explains proudly — "This is CI/CD, young builder — Continuous Integration and Continuous Delivery. The factory NEVER stops!"`,
+    concepts: [
+      { icon: '🔄', title: 'What is CI?', analogy: '<em>Continuous Integration</em> means every developer\'s code is automatically merged and tested — like all cooks tasting the soup every 5 minutes!' },
+      { icon: '🚀', title: 'What is CD?', analogy: '<em>Continuous Delivery</em> means the tested app is automatically packaged and ready to ship — the pizza is boxed up and waiting!' },
+      { icon: '🏭', title: 'The Pipeline', analogy: 'CI/CD pipeline is like a <em>factory assembly line</em> — raw code goes in, a finished tested app comes out the other end!' },
+      { icon: '🧪', title: 'Automated Tests', analogy: 'Like a <em>quality inspector robot</em> — it automatically checks if everything works before shipping to customers!' },
+      { icon: '⚡', title: 'Fast Releases', analogy: 'Before CI/CD, releasing took weeks. Now it takes <em>minutes</em> — like ordering pizza online vs cooking from scratch!' },
+      { icon: '🛡️', title: 'Fail Fast', analogy: 'If something breaks, we find out <em>immediately</em> — better to catch a small crack than let the whole building collapse!' }
+    ],
+    bugQ: { q: "CI/CD helps teams do what much faster than traditional methods?", options: ["Write code", "Release software", "Hire developers", "Buy servers"], ans: 1 }
+  },
+  {
+    id: 5, emoji: '☸️', name: 'Traffic Tower', topic: 'Kubernetes',
+    pramSpeech: `<strong>Pramendra climbs to the top of the Traffic Tower! 🗼</strong><br>"I can see the WHOLE city from here! There are containers going everywhere!" The Traffic Controller greets him — "Welcome! I am Kubernetes — I decide which container goes where, how many we need, and I restart them if they crash. I am the BOSS of containers!"`,
+    concepts: [
+      { icon: '👑', title: 'What is Kubernetes?', analogy: 'Kubernetes (K8s) is like the <em>school principal</em> — decides which class (container) goes to which room, and how many students in each!' },
+      { icon: '📦', title: 'Pods', analogy: 'A Pod is the <em>smallest unit in Kubernetes</em> — like a desk where one or more containers sit together and work!' },
+      { icon: '⚖️', title: 'Load Balancing', analogy: 'Like a <em>traffic policeman</em> — if one road is too busy, he sends cars to a different route. No traffic jams!' },
+      { icon: '🔁', title: 'Self Healing', analogy: 'If a container crashes, Kubernetes <em>automatically restarts it</em> — like a toy that resets itself when it falls!' },
+      { icon: '📈', title: 'Scaling', analogy: 'On a busy day, Kubernetes <em>creates more containers automatically</em> — like a shop hiring extra staff before a festival!' },
+      { icon: '🗺️', title: 'Cluster', analogy: 'A cluster is a <em>team of computers</em> working together — like a city with many workers instead of one overloaded person!' }
+    ],
+    bugQ: { q: "What is the smallest deployable unit in Kubernetes called?", options: ["Container", "Node", "Pod", "Cluster"], ans: 2 }
+  },
+  {
+    id: 6, emoji: '☁️', name: 'Sky District', topic: 'AWS Cloud',
+    pramSpeech: `<strong>Pramendra takes an elevator ALL THE WAY UP to the Sky District! ☁️</strong><br>"Are we... in the CLOUDS?! Everything is floating!" Amazon's eagle swoops in — "Welcome to AWS, young builder! Why buy your own computer when you can RENT one in the sky? We have everything — computers, storage, databases — all floating up here!"`,
+    concepts: [
+      { icon: '💻', title: 'EC2', analogy: 'EC2 is like <em>renting a computer at a shop</em> — use it for an hour or a year, pay only for what you use. No buying needed!' },
+      { icon: '🪣', title: 'S3', analogy: 'S3 is like a <em>magical infinite storage bucket</em> — put any file in, it never gets full, and you can access it from anywhere!' },
+      { icon: '🌐', title: 'VPC', analogy: 'VPC is your own <em>private neighbourhood in the cloud</em> — only YOUR apps live here, strangers cannot enter!' },
+      { icon: '⚖️', title: 'Load Balancer', analogy: 'Like a <em>friendly receptionist</em> who splits visitors equally between all your servers — nobody gets overwhelmed!' },
+      { icon: '📊', title: 'CloudWatch', analogy: 'CloudWatch is like the <em>security camera system</em> — watches everything, alerts you if something weird happens!' },
+      { icon: '🔑', title: 'IAM', analogy: 'IAM is like the <em>security badges system</em> — each person gets only the keys they need. No sneaking into other rooms!' }
+    ],
+    bugQ: { q: "Pramendra wants to store his photos in AWS so he can access them from anywhere. Which AWS service should he use?", options: ["EC2", "VPC", "S3", "IAM"], ans: 2 }
+  },
+  {
+    id: 7, emoji: '📊', name: 'Command Center', topic: 'Monitoring & Logging',
+    pramSpeech: `<strong>Pramendra enters a dark room full of screens showing the whole city! 📡</strong><br>"Woah! I can see EVERYTHING from here! Every building, every pipe!" The Commander nods — "This is our Command Center! We watch the city 24/7. If a pipe bursts or a building wobbles, our alarms ring IMMEDIATELY!"`,
+    concepts: [
+      { icon: '🚨', title: 'What is Monitoring?', analogy: 'Monitoring is like having a <em>smoke alarm for your apps</em> — it screams the moment something goes wrong, before the whole building burns!' },
+      { icon: '📝', title: 'Logs', analogy: 'Logs are like the <em>city\'s diary</em> — every single thing that happens gets written down, so you can investigate later!' },
+      { icon: '📈', title: 'Metrics', analogy: 'Metrics are like the <em>city\'s health report</em> — CPU usage, memory, response time. Like checking a patient\'s temperature!' },
+      { icon: '🔔', title: 'Alerts', analogy: 'Alerts are <em>automatic alarm calls</em> — when CPU hits 90%, you get a call at 3AM so you can fix it before users notice!' },
+      { icon: '🔍', title: 'Prometheus', analogy: 'Prometheus is like the <em>data collector</em> — goes around asking every server "how are you feeling?" every few seconds!' },
+      { icon: '📊', title: 'Grafana', analogy: 'Grafana is like the <em>beautiful dashboard</em> — takes boring numbers from Prometheus and turns them into pretty colourful charts!' }
+    ],
+    bugQ: { q: "Which tool is commonly used to VISUALIZE monitoring metrics as beautiful dashboards?", options: ["Prometheus", "Grafana", "Jenkins", "Docker"], ans: 1 }
+  },
+  {
+    id: 8, emoji: '🏗️', name: 'Urban Planning HQ', topic: 'Terraform (IaC)',
+    pramSpeech: `<strong>Pramendra reaches the final building — Urban Planning HQ! 🗺️</strong><br>"There are blueprints for the ENTIRE city here!" The Chief Planner (Terraform) grins — "Welcome to the end of your journey! Here, we build the whole city using just CODE. Write it once, build it anywhere — AWS, Google Cloud, Azure — all from a single file!"`,
+    concepts: [
+      { icon: '📋', title: 'What is Terraform?', analogy: 'Terraform is like <em>LEGO instructions written in code</em> — describe what you want, and Terraform builds it automatically!' },
+      { icon: '🏗️', title: 'Infrastructure as Code', analogy: 'Instead of clicking buttons to create servers, you <em>write code</em> — like designing a city on paper instead of building brick by brick!' },
+      { icon: '📄', title: '.tf Files', analogy: 'These are your <em>blueprint files</em> — they describe every building, road, and pipe of your cloud city in simple language!' },
+      { icon: '🔄', title: 'Plan & Apply', analogy: '<em>Plan</em> = Terraform shows you what it WILL build. <em>Apply</em> = it actually builds it. Like seeing a movie trailer before watching!' },
+      { icon: '📦', title: 'State File', analogy: 'Terraform keeps a <em>map of everything it built</em> — so it knows what already exists and what needs updating!' },
+      { icon: '♻️', title: 'Destroy', analogy: 'When you\'re done, <em>terraform destroy</em> removes everything cleanly — like packing up LEGO perfectly back in the box!' }
+    ],
+    bugQ: { q: "What do we call the practice of managing servers and infrastructure using code files instead of manual clicking?", options: ["Cloud Computing", "Infrastructure as Code", "DevOps Pipeline", "Container Orchestration"], ans: 1 }
+  }
+];
+
+// ===== STATE =====
+let state = {
+  completed: JSON.parse(localStorage.getItem('dc_completed') || '[]'),
+  currentBuilding: 0,
+  chatHistory: [],
+  chatTurns: 0,
+  interviewTopic: 0,
+  interviewHistory: []
+};
+
+function saveState() {
+  localStorage.setItem('dc_completed', JSON.stringify(state.completed));
+}
+
+// ===== STARS =====
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 3 + 1;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s`;
+    container.appendChild(s);
+  }
+}
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function showCity() {
+  renderCity();
+  showScreen('city-screen');
+}
+
+function showChapter() {
+  showScreen('chapter-screen');
+}
+
+function renderCity() {
+  const grid = document.getElementById('buildings-grid');
+  grid.innerHTML = '';
+  BUILDINGS.forEach((b, i) => {
+    const done = state.completed.includes(i);
+    const available = i === 0 || state.completed.includes(i - 1);
+    const locked = !done && !available;
+    const div = document.createElement('div');
+    div.className = 'building-tile' + (done ? ' completed' : '') + (locked ? ' locked' : '') + (!done && available ? ' available' : '');
+    div.innerHTML = `<span class="building-emoji">${b.emoji}</span><div class="building-name">${b.name}</div><div class="building-topic">${b.topic}</div>`;
+    if (!locked) div.onclick = () => openBuilding(i);
+    grid.appendChild(div);
+  });
+
+  const pct = Math.round((state.completed.length / 9) * 100);
+  document.getElementById('overall-progress').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${state.completed.length} / 9 buildings completed`;
+
+  const iBtn = document.getElementById('interview-btn');
+  if (state.completed.length === 9) {
+    iBtn.classList.add('unlocked');
+    iBtn.textContent = '🎙️ Interview Mode — You Earned It!';
+  }
+}
+
+function openBuilding(idx) {
+  state.currentBuilding = idx;
+  state.chatHistory = [];
+  state.chatTurns = 0;
+  const b = BUILDINGS[idx];
+
+  document.getElementById('chapter-title-bar').textContent = b.emoji + ' ' + b.name;
+  document.getElementById('pram-speech').innerHTML = b.pramSpeech;
+
+  const grid = document.getElementById('concepts-grid');
+  grid.innerHTML = '';
+  b.concepts.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'concept-card';
+    card.style.animationDelay = (i * 0.08) + 's';
+    card.innerHTML = `<div class="concept-icon">${c.icon}</div><div class="concept-title">${c.title}</div><div class="concept-analogy">${c.analogy}</div>`;
+    grid.appendChild(card);
+  });
+
+  showScreen('chapter-screen');
+}
+
+// ===== CHAT WITH ARCH =====
+async function showChat() {
+  state.chatHistory = [];
+  state.chatTurns = 0;
+  const messages = document.getElementById('chat-messages');
+  messages.innerHTML = '';
+  document.getElementById('complete-btn').style.display = 'none';
+  showScreen('chat-screen');
+
+  const b = BUILDINGS[state.currentBuilding];
+  const systemPrompt = `You are Arch, the friendly and wise architect of DevOps City. You are talking to Pramendra, a curious kid learning DevOps.
+
+Your personality: warm, encouraging, uses SIMPLE city analogies, celebrates correct answers with excitement, gently corrects mistakes.
+Topic: ${b.topic}
+Building: ${b.name}
+
+Rules:
+- Use super simple language — explain like the learner is 10 years old
+- Use fun city/real-world analogies
+- Ask ONE quiz question at a time about ${b.topic}
+- After 3-4 exchanges, say something like "Amazing work young builder! You are ready to face the Bug Monster! Click the button below!" to signal completion
+- Keep responses SHORT (3-5 sentences max)
+- Use emojis to make it fun
+- Focus on interview-level concepts but explain them simply`;
+
+  addMessage('arch', '🏛️ Welcome young builder! I am Arch, the DevOps City architect! 🎉 Today we explore <strong>' + b.name + '</strong> — ' + b.topic + '!<br><br>Let\'s start with a simple question: <strong>Can you tell me, in your own words, what you think ' + b.topic.split(' ')[0] + ' might be? No wrong answers!</strong> 😊');
+
+  state.chatHistory.push({ role: 'user', content: `Start teaching me about ${b.topic} in ${b.name}. Ask me a simple opening question.` });
+  state.chatHistory.push({ role: 'assistant', content: `Welcome young builder! I am Arch! Today we explore ${b.name} — ${b.topic}! Can you tell me what you think ${b.topic.split(' ')[0]} might be?` });
+}
+
+function addMessage(role, html, isTyping = false) {
+  const messages = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  if (isTyping) {
+    div.id = 'typing-msg';
+    div.innerHTML = `<div class="msg-avatar">${role === 'arch' ? '🏛️' : '🧒'}</div><div class="msg-bubble"><div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  } else {
+    div.innerHTML = `<div class="msg-avatar">${role === 'arch' ? '🏛️' : '🧒'}</div><div class="msg-bubble">${html}</div>`;
+  }
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+  return div;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  document.getElementById('send-btn').disabled = true;
+
+  addMessage('user', text);
+  state.chatHistory.push({ role: 'user', content: text });
+
+  const typingDiv = addMessage('arch', '', true);
+  state.chatTurns++;
+
+  try {
+    const b = BUILDINGS[state.currentBuilding];
+    const systemPrompt = `You are Arch, the friendly wise architect of DevOps City talking to Pramendra, a curious kid.
+Topic: ${b.topic} — ${b.name}
+Rules: Simple language (explain like to a 10-year-old), fun city analogies, short responses (3-5 sentences), emojis, ask ONE quiz question per response.
+After ${state.chatTurns >= 3 ? 'this response, end with "Amazing work! You are ready to face the Bug Monster! Click the button below! ⚔️"' : 'each response, ask another simple question about ' + b.topic}.`;
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: state.chatHistory
+      })
+    });
+    const data = await resp.json();
+    const reply = data.content[0].text;
+
+    typingDiv.remove();
+    addMessage('arch', reply.replace(/\n/g, '<br>'));
+    state.chatHistory.push({ role: 'assistant', content: reply });
+
+    if (state.chatTurns >= 3) {
+      document.getElementById('complete-btn').style.display = 'block';
+    }
+  } catch (e) {
+    typingDiv.remove();
+    addMessage('arch', "Hmm, the city signals are weak right now! 📡 But don't worry — you've learned great things! Click the button to face the Bug Monster! ⚔️");
+    document.getElementById('complete-btn').style.display = 'block';
+  }
+
+  document.getElementById('send-btn').disabled = false;
+}
+
+// ===== BUG MONSTER =====
+function showBugMonster() {
+  const b = BUILDINGS[state.currentBuilding];
+  const bugLines = [
+    `MWAHAHAHA! 😈 I, the Bug Monster, will BREAK ${b.name}! Answer my question if you dare, Pramendra!`,
+    `You think you know ${b.topic}? PROVE IT! Answer correctly or the building stays DARK! 🌑`,
+    `Ha! Another student challenges me! Let's see if your ${b.topic} knowledge is strong enough! ⚡`
+  ];
+  document.getElementById('bug-speech').textContent = bugLines[Math.floor(Math.random() * bugLines.length)];
+  document.getElementById('bug-question').textContent = b.bugQ.q;
+
+  const optDiv = document.getElementById('bug-options');
+  optDiv.innerHTML = '';
+  b.bugQ.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'bug-option';
+    btn.textContent = opt;
+    btn.onclick = () => answerBug(i, btn);
+    optDiv.appendChild(btn);
+  });
+
+  showScreen('bug-screen');
+}
+
+function answerBug(idx, btn) {
+  const b = BUILDINGS[state.currentBuilding];
+  document.querySelectorAll('.bug-option').forEach(b => b.onclick = null);
+
+  if (idx === b.bugQ.ans) {
+    btn.classList.add('correct');
+    document.querySelector('.bug-monster').textContent = '😭';
+    document.querySelector('.bug-title').textContent = 'Bug Monster DEFEATED!';
+    document.querySelector('.bug-speech').textContent = 'NOOOO! Pramendra knows too much! The building is SAVED! 🎉';
+    setTimeout(showDiary, 1800);
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.bug-option')[b.bugQ.ans].classList.add('correct');
+    document.querySelector('.bug-speech').textContent = 'Almost! The correct answer is highlighted. Pramendra will remember this next time! 💪';
+    setTimeout(showDiary, 2500);
+  }
+}
+
+// ===== DIARY =====
+async function showDiary() {
+  showScreen('diary-screen');
+  const b = BUILDINGS[state.currentBuilding];
+  const now = new Date();
+  document.getElementById('diary-date').textContent = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('diary-heading').textContent = `Day ${state.currentBuilding + 1}: ${b.name} — ${b.topic}`;
+  document.getElementById('diary-content').innerHTML = '✍️ Writing diary entry...';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Write a SHORT funny diary entry (5-7 sentences) from Pramendra's point of view, a curious 10-year-old kid. He just finished learning about "${b.topic}" at "${b.name}" in DevOps City. He defeated the Bug Monster. Write in simple, childlike, excited language. Include one key thing he learned explained very simply, his reaction to the Bug Monster, and what he's excited to explore next. No headers, just the diary text.`
+        }]
+      })
+    });
+    const data = await resp.json();
+    document.getElementById('diary-content').innerHTML = data.content[0].text.replace(/\n/g, '<br>');
+  } catch (e) {
+    document.getElementById('diary-content').innerHTML = `Today I learned all about ${b.topic} at ${b.name}! It was SO cool! And I defeated the Bug Monster — he ran away crying! I feel like a real DevOps hero now! Can't wait to explore the next building! 🏆`;
+  }
+
+  const nextBtn = document.getElementById('diary-next-btn');
+  if (state.currentBuilding === 8 && !state.completed.includes(8)) {
+    nextBtn.textContent = '🎓 Get Your Hero Certificate!';
+    nextBtn.onclick = () => {
+      completeBuilding();
+      showScreen('cert-screen');
+    };
+  } else {
+    nextBtn.textContent = '🏙️ Back to City Map!';
+    nextBtn.onclick = completeBuildingAndNext;
+  }
+}
+
+function completeBuilding() {
+  if (!state.completed.includes(state.currentBuilding)) {
+    state.completed.push(state.currentBuilding);
+    saveState();
+  }
+}
+
+function completeBuildingAndNext() {
+  completeBuilding();
+  showCelebration();
+}
+
+function showCelebration() {
+  const b = BUILDINGS[state.currentBuilding];
+  const overlay = document.createElement('div');
+  overlay.className = 'celebration';
+  overlay.innerHTML = `
+    <div class="celebration-emoji">${b.emoji}</div>
+    <div class="celebration-text">${b.name} Complete!</div>
+    <div class="celebration-sub">🎉 Pramendra lights up another building! The city grows brighter! 🎉</div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => { overlay.remove(); showCity(); }, 2500);
+}
+
+// ===== INTERVIEW MODE =====
+function showInterview() {
+  state.interviewHistory = [];
+  state.interviewTopic = 0;
+
+  const selector = document.getElementById('topic-selector');
+  selector.innerHTML = '';
+  BUILDINGS.forEach((b, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'topic-btn' + (i === 0 ? ' selected' : '');
+    btn.textContent = b.emoji + ' ' + b.topic;
+    btn.onclick = () => {
+      document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      state.interviewTopic = i;
+      startInterviewSession();
+    };
+    selector.appendChild(btn);
+  });
+
+  showScreen('interview-screen');
+  startInterviewSession();
+}
+
+async function startInterviewSession() {
+  const messages = document.getElementById('interview-messages');
+  messages.innerHTML = '';
+  state.interviewHistory = [];
+  const b = BUILDINGS[state.interviewTopic];
+
+  const openingQ = await callArch(`You are Arch in strict INTERVIEW MODE for a DevOps job interview. Topic: ${b.topic}. Ask the first professional interview question. Be professional and direct. No hints, no analogies. Just the question. Keep it to 2 sentences max.`, []);
+  addInterviewMessage('arch', openingQ);
+  state.interviewHistory.push({ role: 'assistant', content: openingQ });
+}
+
+async function sendInterviewMessage() {
+  const input = document.getElementById('interview-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const messages = document.getElementById('interview-messages');
+  const userDiv = document.createElement('div');
+  userDiv.className = 'msg user';
+  userDiv.innerHTML = `<div class="msg-avatar">🧒</div><div class="msg-bubble">${text}</div>`;
+  messages.appendChild(userDiv);
+  messages.scrollTop = messages.scrollHeight;
+
+  state.interviewHistory.push({ role: 'user', content: text });
+
+  const b = BUILDINGS[state.interviewTopic];
+  const system = `You are Arch in strict DevOps interview mode. Topic: ${b.topic}. Be a professional interviewer — evaluate the answer, give brief feedback (1-2 sentences), then ask the next interview question. No fun analogies. Real interview style. Keep responses under 4 sentences.`;
+
+  const reply = await callArch(system, state.interviewHistory);
+  addInterviewMessage('arch', reply);
+  state.interviewHistory.push({ role: 'assistant', content: reply });
+}
+
+function addInterviewMessage(role, text) {
+  const messages = document.getElementById('interview-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = `<div class="msg-avatar">${role === 'arch' ? '🏛️' : '🧒'}</div><div class="msg-bubble">${text.replace(/\n/g, '<br>')}</div>`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+async function callArch(system, history) {
+  try {
+    const msgs = history.length > 0 ? history : [{ role: 'user', content: 'Begin.' }];
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system,
+        messages: msgs
+      })
+    });
+    const data = await resp.json();
+    return data.content[0].text;
+  } catch (e) {
+    return "Connection to the city is weak right now. Please try again! 📡";
+  }
+}
+
+// ===== INIT =====
+createStars();
+</script>
+</body>
+</html>
